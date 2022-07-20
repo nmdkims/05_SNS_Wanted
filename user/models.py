@@ -39,8 +39,8 @@ class User(AbstractBaseUser):
 
     """
 
-    user_id = models.BigAutoField(primary_key=True)
-    email = models.EmailField("사용자 닉네임", max_length=20, unique=True)
+    id = models.BigAutoField(primary_key=True)
+    email = models.EmailField("사용자 이메일", max_length=20, unique=True)
     password = models.CharField("비밀번호", max_length=128)
 
     """is_active가 False일 경우 계정이 비활성화됨"""
