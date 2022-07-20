@@ -26,7 +26,9 @@ SECRET_KEY = MY_SECRET
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
+
+AUTH_USER_MODEL = "user.User"
 
 # Application definition
 
@@ -44,7 +46,9 @@ THIRD_PARTY_APPS = [
     "rest_framework_simplejwt",
 ]
 
-PROJECT_APPS = []
+PROJECT_APPS = [
+    "user",
+]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + PROJECT_APPS
 
