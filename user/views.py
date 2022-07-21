@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from user.jwt_claim_serializer import GameTokenObtainPairSerializer
-from user.serializers import UserSignupSerializer, UserSigninSerializer
+from user.serializers import UserSigninSerializer, UserSignupSerializer
 
 
 # /users/signup
@@ -47,6 +47,8 @@ class LoginView(APIView):
         "password" : "root1234"
     }
 
+    delete: 로그아웃
+
     """
 
     permission_classes = [AllowAny]
@@ -57,7 +59,10 @@ class LoginView(APIView):
 
         user = authenticate(request, username=email, password=password)
         if not user:
-            return Response({"error": "존재하지 않는 계정이거나 패스워드가 일치하지 않습니다."}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(
+                {"error": "존재하지 않는 계정이거나 패스워드가 일치하지 않습니다."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
 
         user_serializer = UserSigninSerializer(user)
         token = GameTokenObtainPairSerializer.get_token(user)
@@ -77,3 +82,8 @@ class LoginView(APIView):
         )
         login(request, user)
         return response
+
+    def delete(self, request):
+        user = request.user
+        logout(request)
+        return Response(f"user :{user} 로그아웃 성공!!, 토큰을 유지")

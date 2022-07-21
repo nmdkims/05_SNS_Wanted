@@ -16,6 +16,6 @@ class GameTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         """사용자 지정 클레임 설정하기"""
         token["id"] = user.id
-        token["nickname"] = user.nickname
+        token["email"] = user.email
 
         return token
