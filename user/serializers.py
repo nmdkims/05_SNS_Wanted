@@ -56,3 +56,16 @@ class UserSignupSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+class UserSigninSerializer(serializers.ModelSerializer):
+    """
+    Assignee : 훈희
+
+    로그인 serializer 입니다.
+
+    """
+
+    class Meta:
+        model = UserModel
+        fields = ["id", "email"]
