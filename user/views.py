@@ -1,10 +1,14 @@
 from django.contrib.auth import authenticate, login, logout
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.generics import GenericAPIView
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from user.jwt_claim_serializer import GameTokenObtainPairSerializer
+from user.jwt_claim_serializer import (
+    GameTokenObtainPairSerializer,
+    RefreshTokenSerializer,
+)
 from user.serializers import UserSigninSerializer, UserSignupSerializer
 
 
@@ -43,7 +47,7 @@ class LoginView(APIView):
 
     로그인시 입력 data 타입 json 구조는 밑과 같습니다.
     {
-        "email" : "test1",
+        "email" : "test1@gmail.com",
         "password" : "root1234"
     }
 
@@ -87,3 +91,36 @@ class LoginView(APIView):
         user = request.user
         logout(request)
         return Response(f"user :{user} 로그아웃 성공!!, 토큰을 유지")
+
+
+# /users/logout
+class LogoutView(GenericAPIView):
+    """
+     Assignee : 훈희
+
+     post : 로그아웃
+     로그아웃 하면서 토큰을 같이 반납합니다.
+     기존의 delete method를 사용하지 않으며 post 방식으로 refresh token을
+     보내주게 됩니다.
+
+     로그인시 입력 data 타입 json 구조는 밑과 같습니다.
+    {
+       "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTY1NzkwMzY5MywiaWF0IjoxNjU3ODE3MjkzLCJqdGkiOiJkMjdiMGUxNDU1NTc0NWRjYWRiOTU4YzA1YjA4ZGEzNiIsInVzZXJfaWQiOjgsImlkIjo4LCJuaWNrbmFtZSI6InRlc3Q0MiJ9.iqLPbGoFxaFbp0yXvsKjBwgT7EF29I6URi7O05j2YVg"
+    }
+
+    """
+
+    serializer_class = RefreshTokenSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args):
+        refresh = self.get_serializer(data=request.data)
+        refresh.is_valid(raise_exception=True)
+        refresh.save()
+
+        user = request.user
+        logout(request)
+
+        return Response(
+            f"user :{user} 로그아웃 성공!!, 토큰을 반납", status=status.HTTP_204_NO_CONTENT
+        )
