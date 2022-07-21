@@ -24,14 +24,10 @@ class UserSignupSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if data.get("email"):
             if not len(data.get("email", "")) >= 6:
-                raise serializers.ValidationError(
-                    detail={"error": "email의 길이는 6자리 이상이어야 합니다."}
-                )
+                raise serializers.ValidationError(detail={"error": "email의 길이는 6자리 이상이어야 합니다."})
 
         if not len(data.get("password", "")) >= 6:
-            raise serializers.ValidationError(
-                detail={"error": "password의 길이는 6자리 이상이어야 합니다."}
-            )
+            raise serializers.ValidationError(detail={"error": "password의 길이는 6자리 이상이어야 합니다."})
 
         return data
 

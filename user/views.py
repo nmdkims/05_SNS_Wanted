@@ -5,10 +5,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from user.jwt_claim_serializer import (
-    GameTokenObtainPairSerializer,
-    RefreshTokenSerializer,
-)
+from user.jwt_claim_serializer import GameTokenObtainPairSerializer, RefreshTokenSerializer
 from user.serializers import UserSigninSerializer, UserSignupSerializer
 
 
@@ -121,6 +118,4 @@ class LogoutView(GenericAPIView):
         user = request.user
         logout(request)
 
-        return Response(
-            f"user :{user} 로그아웃 성공!!, 토큰을 반납", status=status.HTTP_204_NO_CONTENT
-        )
+        return Response(f"user :{user} 로그아웃 성공!!, 토큰을 반납", status=status.HTTP_204_NO_CONTENT)
