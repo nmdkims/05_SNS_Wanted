@@ -36,9 +36,9 @@ class Post(models.Model):
     writer = models.ForeignKey(to=UserModel, verbose_name="작성자", on_delete=models.CASCADE, related_name="post_writer")
     title = models.CharField("제목", max_length=32)
     content = models.TextField("내용")
-    status = models.ForeignKey(to=Status, verbose_name="상태", on_delete=models.CASCADE, related_name="post")
+    status = models.ForeignKey(to=Status, verbose_name="상태", on_delete=models.CASCADE, related_name="post_status")
 
-    hashtags = models.ManyToManyField(Hashtag, related_name="hashtag_articles", blank=True)
+    hashtags = models.ManyToManyField(Hashtag, related_name="post_hashtag", blank=True)
 
     created_at = models.DateTimeField("작성시간", auto_now_add=True)
     updated_at = models.DateTimeField("수정시간", auto_now=True)
