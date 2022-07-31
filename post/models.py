@@ -39,9 +39,15 @@ class Post(models.Model):
     status = models.ForeignKey(to=Status, verbose_name="상태", on_delete=models.CASCADE, related_name="post_status")
 
     hashtags = models.ManyToManyField(Hashtag, related_name="post_hashtag", blank=True)
+    view_counts = models.PositiveIntegerField("조회수", default=0)
+    like_users = models.ManyToManyField(to=UserModel, verbose_name="좋아요한 사람", related_name="like_posts", blank=True)
 
     created_at = models.DateTimeField("작성시간", auto_now_add=True)
     updated_at = models.DateTimeField("수정시간", auto_now=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(args, kwargs)
+        self.user = None
 
     def __str__(self):
         return f"id : {self.id} / {self.writer}의 게시글"

@@ -1,3 +1,5 @@
+from django.core.paginator import Paginator
+from django.db.models import Count, Q
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,7 +14,7 @@ class PostView(APIView):
     Assignee : 훈희
 
     게시글 목록 생성, 조회를 위한 view입니다.
-    GET : 게시글 목록 조회
+    GET : 게시글 상세 조회
     POST : 게시글 생성
 
     """
@@ -21,45 +23,47 @@ class PostView(APIView):
 
     def get(self, request):
         """
-        게시글 목록 조회
-        :param page:        페이지네이션을 위한 파라미터입니다.             default = 1
-        :param limit:       페이지네이션 개수를 정하기 위한 파라미터입니다. default = 10
-        :param sorting:     정렬 방법을 정하는 파라미터입니다.              default = -created_at
-        :param searching:   검색을 위한 파라미터입니다.                     default = ""
-        :param hashtags:    필터를 위한 파라미터입니다.                     default = ""
-        :return Response:   게시글 목록 data, 상태코드
+        Assignee : 훈희
+        게시글 상세 조회합니다.
         """
 
-        # 페이지네이션 설정
-        page = int(request.GET.get("page", 1) or 1)
-        limit = int(request.GET.get("limit", 10) or 10)
-        offset = limit * (page - 1)
+        posts = PostModel.objects.all()
+        serializer = PostListSerializer(posts, many=True)
 
-        # 정렬 설정
-        sorting = request.GET.get("sorting", "-created_at") or "-created_at"
+        """게시글 정렬 기능"""
+        sort = request.GET.get("sort", "")
+        if sort == "asc":
+            posts = posts.order_by("created_at")
+        elif sort == "desc":
+            posts = posts.order_by("-created_at")
+        elif sort == "likes1":
+            posts = posts.annotate(like=Count("likes__user_like")).order_by("like", "id")
+        elif sort == "likes2":
+            posts = posts.annotate(like=Count("likes__user_like")).order_by("-like", "-id")
+        elif sort == "views1":
+            posts = posts.order_by("views", "id")
+        elif sort == "views2":
+            posts = posts.order_by("-views", "-id")
 
-        # 검색 설정
-        search = request.GET.get("searching", "") or ""
-        search_list = search.split(" ")
+        """키워드 검색 기능"""
+        search_keyword = request.GET.get("search")
+        if search_keyword:
+            posts = posts.filter(Q(is_deleted=False) & Q(title__icontains=search_keyword))
 
-        search_posts = PostModel.objects.filter(title__icontains=search_list[0])
+        """필터링 기능"""
+        hashtags = request.GET.get("hashtags")
+        if hashtags:
+            posts = posts.filter(Q(is_deleted=False) & Q(hashtags__icontains=hashtags))
 
-        for word in search_list[1:]:
-            search_posts = search_posts | PostModel.objects.filter(title__icontains=word)
+        """pagination 기능"""
+        page_number = self.request.query_params.get("page", 1)
+        page_size = self.request.query_params.get("page_count", 10)
+        paginator = Paginator(posts, page_size)
+        serializer = serializer(paginator.page(page_number), many=True, context={"request": request})
 
-        # 필터 설정
-        hashtag = request.GET.get("hashtags", "") or ""
-        if hashtag == "":
-            pass
-        else:
-            hashtag_list = hashtag.split(",")
-
-            for word in hashtag_list:
-                search_posts = search_posts.filter(hashtags_text__icontains=f"#{word},")
-
-        # 조건에 맞는 게시글 가져오기
-        posts = search_posts.order_by(sorting).filter(status__status="public")[offset : offset + limit]
-        return Response(PostListSerializer(posts, many=True).data, status=status.HTTP_200_OK)
+        if not posts:
+            return Response({"error": "게시글이 존재하지 않습니다."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
         """
@@ -72,3 +76,23 @@ class PostView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"message": "게시글 작성 성공"}, status=status.HTTP_201_CREATED)
+
+
+class PostDetailView(APIView):
+    """
+    Assignee: 훈희
+
+    query param: post_id
+    return: json
+    detail:
+      - 인증/인가에 통과한 유저는 모든 게시글을 조회할 수 있습니다.(GET: 게시글 상세 조회 기능)
+      - 인증/인가에 통과한 유저는 본인의 게시글을 수정할 수 있습니다.(PATCH: 게시글 수정 기능)
+      - 인증/인가에 통과한 유저는 본인의 게시글을 삭제할 수 있습니다.(DELETE: 게시글 삭제 기능)
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, post_id):
+        """
+        GET: 게시글 조회(상세) 기능[조회수 증가]
+        """
